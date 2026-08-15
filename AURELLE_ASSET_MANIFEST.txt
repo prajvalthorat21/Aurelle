@@ -1,0 +1,35 @@
+AURELLE FINAL ASSET MANIFEST
+============================
+
+BRAND
+- assets/brand/logo/aurelle-logo-lockup.png
+
+SOLSTICE
+- hero/solstice-hero.png
+- products/elan/elan-main.png
+- products/stillness/stillness-main.png
+- products/aurelia/aurelia-main.png
+- products/the-arc/the-arc-main.png
+
+REVERIE
+- hero/reverie-hero.png
+- products/lumiere/lumiere-main.png
+- products/etoile/etoile-main.png
+- products/quiet-return/quiet-return-main.png
+- products/celeste/celeste-main.png
+
+VOW
+- hero/vow-hero.png
+- products/eternalis/eternalis-main.png
+- products/seren/seren-main.png
+- products/continuum/continuum-main.png
+- products/elane/elane-main.png
+
+HERO RING MOTION
+- hero/ring/frames/frame-0001.webp ... frame-0096.webp
+- hero/ring/source/ring-360-master.mp4
+- hero/ring/poster/ring-reference.png
+
+APPROVED IMPLEMENTATION DIRECTION
+- Hero only: scroll-controlled 360° ring sequence.
+- Post-hero: normal scrolling, no heavy global scroll effects.
