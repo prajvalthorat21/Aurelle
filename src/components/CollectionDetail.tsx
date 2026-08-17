@@ -25,8 +25,9 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
   });
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
-  // Reduced motion media query check
+  // Reduced motion & mobile media query check
   const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -35,6 +36,15 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, []);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 768px)');
+    const handleMobileChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener('change', handleMobileChange);
+      return () => mobileQuery.removeEventListener('change', handleMobileChange);
     }
   }, []);
 
@@ -66,7 +76,7 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
   };
 
   return (
-    <div className="collection-detail-page" aria-label={`${collection.name} Collection Experience`}>
+    <div className="collection-detail-page" data-collection={collection.id} aria-label={`${collection.name} Collection Experience`}>
       {/* Luxury Navigation Header */}
       <header className="aurelle-header">
         <a
@@ -125,8 +135,7 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
               />
             ) : (
               <video
-                key={collection.id}
-                src={collection.heroVideoSrc}
+                key={`${collection.id}-${isMobile ? 'mobile' : 'desktop'}`}
                 poster={collection.heroImageSrc}
                 autoPlay
                 muted
@@ -134,7 +143,12 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
                 preload="auto"
                 className="collection-hero-video"
                 aria-label={`${collection.name} Campaign Video`}
-              />
+              >
+                {collection.heroMobileVideoSrc && (
+                  <source media="(max-width: 768px)" src={collection.heroMobileVideoSrc} type="video/mp4" />
+                )}
+                <source src={collection.heroVideoSrc} type="video/mp4" />
+              </video>
             )}
           </div>
 

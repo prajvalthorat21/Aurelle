@@ -7,6 +7,7 @@ interface HeroProps {
 export const HeroScroll: React.FC<HeroProps> = ({ onExploreClick }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
   // Check prefers-reduced-motion media query
   useEffect(() => {
@@ -23,6 +24,19 @@ export const HeroScroll: React.FC<HeroProps> = ({ onExploreClick }) => {
     }
   }, []);
 
+  // Listen to mobile breakpoint changes
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 768px)');
+    const handleMobileChange = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches);
+    };
+
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener('change', handleMobileChange);
+      return () => mobileQuery.removeEventListener('change', handleMobileChange);
+    }
+  }, []);
+
   // Ensure video autoplays cleanly on mount if reduced motion is disabled
   useEffect(() => {
     if (!prefersReducedMotion && videoRef.current) {
@@ -30,7 +44,7 @@ export const HeroScroll: React.FC<HeroProps> = ({ onExploreClick }) => {
         console.warn('Autoplay prevented by browser policy:', err);
       });
     }
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, isMobile]);
 
   // Handle CTA click to smoothly scroll to collections section
   const handleCtaClick = (e: React.MouseEvent) => {
@@ -60,8 +74,8 @@ export const HeroScroll: React.FC<HeroProps> = ({ onExploreClick }) => {
           />
         ) : (
           <video
+            key={isMobile ? 'hero-mobile' : 'hero-desktop'}
             ref={videoRef}
-            src="/assets/hero/video/aurelle-hero-ugc.mp4"
             poster="/assets/hero/video/poster/aurelle-hero-poster.jpg"
             autoPlay
             muted
@@ -70,7 +84,10 @@ export const HeroScroll: React.FC<HeroProps> = ({ onExploreClick }) => {
             preload="auto"
             className="hero-video"
             aria-hidden="true"
-          />
+          >
+            <source media="(max-width: 768px)" src="/assets/hero/video/aurelle-hero-ugc-mobile.mp4" type="video/mp4" />
+            <source src="/assets/hero/video/aurelle-hero-ugc.mp4" type="video/mp4" />
+          </video>
         )}
       </div>
 

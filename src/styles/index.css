@@ -747,6 +747,7 @@ h1, h2, h3, .serif-text {
   border: none;
   border-radius: 0;
   box-shadow: none;
+  overflow: hidden;
 }
 
 .collection-hero-image,
@@ -1446,10 +1447,50 @@ h1, h2, h3, .serif-text {
     grid-template-columns: 1fr;
     gap: 40px;
   }
+
+  /* Specific Mobile Framing for REVERIE and VOW Collection Hero Poster Images & Video Layer */
+  .collection-detail-page[data-collection="reverie"] .collection-hero-image,
+  .collection-detail-page[data-collection="reverie"] .collection-hero-video,
+  .collection-detail-page[data-collection="vow"] .collection-hero-image,
+  .collection-detail-page[data-collection="vow"] .collection-hero-video {
+    object-fit: cover;
+    object-position: 82% center;
+    transform: scale(0.92);
+    transform-origin: center center;
+  }
   
   .product-editorial-grid {
     grid-template-columns: 1fr;
     gap: 40px;
+  }
+
+  .product-media-wrapper {
+    height: clamp(340px, 85vw, 420px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #000000;
+    overflow: hidden;
+  }
+
+  .product-image {
+    object-fit: contain;
+    object-position: 72% center;
+    transform: scale(1.32);
+    transform-origin: 72% 50%;
+  }
+
+  /* Specific Mobile Refinement for REVERIE and VOW Necklace Framing */
+  .collection-detail-page[data-collection="reverie"] .product-image,
+  .collection-detail-page[data-collection="vow"] .product-image {
+    object-position: 62% center;
+    transform: scale(1.32);
+    transform-origin: 62% 50%;
+  }
+
+  .product-card:hover .product-image,
+  .product-card:focus-visible .product-image {
+    transform: scale(1.36);
   }
 }
 

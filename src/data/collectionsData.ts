@@ -20,6 +20,7 @@ export interface CollectionDetail {
   description: string;
   heroImageSrc: string;
   heroVideoSrc: string;
+  heroMobileVideoSrc?: string;
   hoverVideoSrc: string;
   philosophy: string;
   closingStatement: string;
@@ -40,6 +41,7 @@ export const COLLECTIONS_DETAIL_DATA: Record<string, CollectionDetail> = {
     description: 'A study in radiance and restraint, SOLSTICE explores the relationship between warm metal, light and exceptional stones.',
     heroImageSrc: '/assets/collections/solstice/hero/solstice-hero.png',
     heroVideoSrc: '/assets/collections/solstice/hero/solstice-hero-ugc.mp4',
+    heroMobileVideoSrc: '/assets/collections/solstice/hero/solstice-hero-ugc-mobile.mp4',
     hoverVideoSrc: '/assets/collections/solstice/hover/solstice-hover.mp4',
     philosophy: 'Solstice celebrates the zenith of light—where precision engineering meets raw crystalline purity. Each solitaire is sculpted to maximize reflection and proportion.',
     closingStatement: 'Sculpted with solar brilliance, designed to outlast time.',
@@ -99,6 +101,7 @@ export const COLLECTIONS_DETAIL_DATA: Record<string, CollectionDetail> = {
     description: 'REVERIE is defined by fluid geometry and quiet contrast, where diamonds trace elegant contours between silhouette and shadow.',
     heroImageSrc: '/assets/collections/reverie/hero/reverie-hero.png',
     heroVideoSrc: '/assets/collections/reverie/hero/reverie-hero-ugc.mp4',
+    heroMobileVideoSrc: '/assets/collections/reverie/hero/reverie-hero-ugc-mobile.mp4',
     hoverVideoSrc: '/assets/collections/reverie/hover/reverie-hover.mp4',
     philosophy: 'Reverie explores the space between light and dark. Soft fluid curves cascade seamlessly, creating an intimate dialogue between metal, gemstone, and skin.',
     closingStatement: 'An architectural reverie of form, light, and shadow.',
@@ -158,6 +161,7 @@ export const COLLECTIONS_DETAIL_DATA: Record<string, CollectionDetail> = {
     description: 'VOW explores permanence through intertwined forms, warm metal and restrained brilliance — designed around the idea of enduring connection.',
     heroImageSrc: '/assets/collections/vow/hero/vow-hero.png',
     heroVideoSrc: '/assets/collections/vow/hero/vow-hero-ugc.mp4',
+    heroMobileVideoSrc: '/assets/collections/vow/hero/vow-hero-ugc-mobile.mp4',
     hoverVideoSrc: '/assets/collections/vow/hover/vow-hover.mp4',
     philosophy: 'Vow is a quiet pledge of eternity. Warm champagne tones and hand-finished proportions create timeless symbols of devotion.',
     closingStatement: 'Shaped by light, bound by quiet devotion.',
