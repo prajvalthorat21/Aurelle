@@ -1,18 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { safePlayVideo } from '../utils/videoUtils';
 
 export const Manifesto: React.FC = () => {
   const sectionRef = useRef<HTMLElement | null>(null);
+  const ringVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isVisible, setIsVisible] = useState<boolean>(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-    if (mediaQuery.matches) {
-      setIsVisible(true);
-      return;
-    }
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -30,6 +24,14 @@ export const Manifesto: React.FC = () => {
 
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    const video = ringVideoRef.current;
+    if (!video) return;
+
+    safePlayVideo(video);
+  }, [isVisible]);
 
   return (
     <section
@@ -59,28 +61,19 @@ export const Manifesto: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Floating 360° High-Jewelry Ring Visual */}
+        {/* Right Column: Persistent Floating 360° High-Jewelry Ring Visual */}
         <div className="manifesto-visual-col">
-          {prefersReducedMotion ? (
-            <video
-              src="/assets/hero/ring/source/ring-360-master.mp4"
-              className="manifesto-necklace-video"
-              muted
-              playsInline
-              aria-label="AURELLE 360° High-Jewelry Ring Visual"
-            />
-          ) : (
-            <video
-              src="/assets/hero/ring/source/ring-360-master.mp4"
-              className="manifesto-necklace-video"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-              aria-label="AURELLE 360° High-Jewelry Ring Visual"
-            />
-          )}
+          <video
+            ref={ringVideoRef}
+            src="/assets/hero/ring/source/ring-360-master.mp4"
+            className="manifesto-necklace-video"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-label="AURELLE 360° High-Jewelry Ring Visual"
+          />
         </div>
       </div>
     </section>

@@ -1,4 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
+import { safePlayVideo } from '../utils/videoUtils';
 
 interface HeroProps {
   onExploreClick?: () => void;
@@ -6,45 +7,25 @@ interface HeroProps {
 
 export const HeroScroll: React.FC<HeroProps> = ({ onExploreClick }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
-  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
-  // Check prefers-reduced-motion media query
+  // Programmatically manage autoplay on the persistent hero video element
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
+    const video = videoRef.current;
+    if (!video) return;
 
-    const handleChange = (e: MediaQueryListEvent) => {
-      setPrefersReducedMotion(e.matches);
+    safePlayVideo(video);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && videoRef.current) {
+        safePlayVideo(videoRef.current);
+      }
     };
 
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-  }, []);
-
-  // Listen to mobile breakpoint changes
-  useEffect(() => {
-    const mobileQuery = window.matchMedia('(max-width: 768px)');
-    const handleMobileChange = (e: MediaQueryListEvent) => {
-      setIsMobile(e.matches);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-
-    if (mobileQuery.addEventListener) {
-      mobileQuery.addEventListener('change', handleMobileChange);
-      return () => mobileQuery.removeEventListener('change', handleMobileChange);
-    }
   }, []);
-
-  // Ensure video autoplays cleanly on mount if reduced motion is disabled
-  useEffect(() => {
-    if (!prefersReducedMotion && videoRef.current) {
-      videoRef.current.play().catch((err) => {
-        console.warn('Autoplay prevented by browser policy:', err);
-      });
-    }
-  }, [prefersReducedMotion, isMobile]);
 
   // Handle CTA click to smoothly scroll to collections section
   const handleCtaClick = (e: React.MouseEvent) => {
@@ -64,31 +45,23 @@ export const HeroScroll: React.FC<HeroProps> = ({ onExploreClick }) => {
 
   return (
     <section className="hero-section" aria-label="AURELLE Campaign Hero">
-      {/* Final Approved UGC Hero Video / Poster Layer */}
+      {/* Persistent UGC Hero Video Layer */}
       <div className="hero-video-container">
-        {prefersReducedMotion ? (
-          <img
-            src="/assets/hero/video/poster/aurelle-hero-poster.jpg"
-            alt="AURELLE High Jewelry Campaign"
-            className="hero-poster-img"
-          />
-        ) : (
-          <video
-            key={isMobile ? 'hero-mobile' : 'hero-desktop'}
-            ref={videoRef}
-            poster="/assets/hero/video/poster/aurelle-hero-poster.jpg"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="hero-video"
-            aria-hidden="true"
-          >
-            <source media="(max-width: 768px)" src="/assets/hero/video/aurelle-hero-ugc-mobile.mp4" type="video/mp4" />
-            <source src="/assets/hero/video/aurelle-hero-ugc.mp4" type="video/mp4" />
-          </video>
-        )}
+        <video
+          key="hero-video-stable"
+          ref={videoRef}
+          poster="/assets/hero/video/poster/aurelle-hero-poster.jpg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="hero-video"
+          aria-hidden="true"
+        >
+          <source media="(max-width: 768px)" src="/assets/hero/video/aurelle-hero-ugc-mobile.mp4" type="video/mp4" />
+          <source src="/assets/hero/video/aurelle-hero-ugc.mp4" type="video/mp4" />
+        </video>
       </div>
 
       {/* Editorial Luxury Typography Overlay */}

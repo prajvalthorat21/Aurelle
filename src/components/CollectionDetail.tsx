@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { COLLECTIONS_DETAIL_DATA } from '../data/collectionsData';
+import { safePlayVideo } from '../utils/videoUtils';
 
 interface CollectionDetailProps {
   collectionId: string;
@@ -13,6 +14,7 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
   onNavigateCollection,
 }) => {
   const collection = COLLECTIONS_DETAIL_DATA[collectionId] || COLLECTIONS_DETAIL_DATA['solstice'];
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Consultation Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -25,28 +27,24 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
   });
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
-  // Reduced motion & mobile media query check
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
-  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' && window.innerWidth <= 768);
-
+  // Programmatically manage playback on persistent video element
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-    const handleChange = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-  }, []);
+    const video = videoRef.current;
+    if (!video) return;
 
-  useEffect(() => {
-    const mobileQuery = window.matchMedia('(max-width: 768px)');
-    const handleMobileChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    if (mobileQuery.addEventListener) {
-      mobileQuery.addEventListener('change', handleMobileChange);
-      return () => mobileQuery.removeEventListener('change', handleMobileChange);
-    }
-  }, []);
+    safePlayVideo(video);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && videoRef.current) {
+        safePlayVideo(videoRef.current);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [collectionId]);
 
   // Scroll to top on collection switch
   useEffect(() => {
@@ -125,31 +123,25 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
             </a>
           </div>
 
-          {/* Full-Screen Video / Poster Background Layer */}
+          {/* Persistent Video Background Layer */}
           <div className="collection-hero-visual-wrapper">
-            {prefersReducedMotion ? (
-              <img
-                src={collection.heroImageSrc}
-                alt={`${collection.name} Fine Jewelry Hero`}
-                className="collection-hero-image"
-              />
-            ) : (
-              <video
-                key={`${collection.id}-${isMobile ? 'mobile' : 'desktop'}`}
-                poster={collection.heroImageSrc}
-                autoPlay
-                muted
-                playsInline
-                preload="auto"
-                className="collection-hero-video"
-                aria-label={`${collection.name} Campaign Video`}
-              >
-                {collection.heroMobileVideoSrc && (
-                  <source media="(max-width: 768px)" src={collection.heroMobileVideoSrc} type="video/mp4" />
-                )}
-                <source src={collection.heroVideoSrc} type="video/mp4" />
-              </video>
-            )}
+            <video
+              key={collection.id}
+              ref={videoRef}
+              poster={collection.heroImageSrc}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              className="collection-hero-video"
+              aria-label={`${collection.name} Campaign Video`}
+            >
+              {collection.heroMobileVideoSrc && (
+                <source media="(max-width: 768px)" src={collection.heroMobileVideoSrc} type="video/mp4" />
+              )}
+              <source src={collection.heroVideoSrc} type="video/mp4" />
+            </video>
           </div>
 
           {/* Editorial Typography Overlay */}
@@ -158,44 +150,10 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
             <h1 className="collection-hero-title">{collection.name}</h1>
             <p className="collection-hero-statement">{collection.heroTitle}</p>
             <p className="collection-hero-subtitle">{collection.heroSubtitle}</p>
-          </div>
-        </section>
 
-        {/* 2. COLLECTION COMMERCIAL SUMMARY & METADATA */}
-        <section className="collection-commercial-section" aria-label={`${collection.name} Commercial Information`}>
-          <div className="collection-commercial-container">
-            {/* Header / Identity */}
-            <div className="commercial-header-block">
-              <h2 className="commercial-collection-name">{collection.name}</h2>
-              <span className="commercial-descriptor">{collection.descriptor}</span>
-            </div>
-
-            <div className="commercial-divider" aria-hidden="true" />
-
-            {/* Materials & Indicative Pricing */}
-            <div className="commercial-specs-block">
-              <div className="commercial-summary-meta">
-                <span className="meta-piece-count">{collection.products.length} PIECES</span>
-                <span className="meta-dot">·</span>
-                <span className="commercial-material">{collection.material}</span>
-              </div>
-              <div className="commercial-price-block">
-                <span className="price-label">FROM </span>
-                <span className="price-amount">{collection.price.replace(/^From\s*/i, '')}</span>
-              </div>
-              <p className="pricing-disclaimer">
-                Indicative pricing · Final price determined by stone selection and craftsmanship.
-              </p>
-            </div>
-
-            <div className="commercial-divider" aria-hidden="true" />
-
-            {/* Design Philosophy Description & CTA */}
-            <div className="commercial-body-block">
-              <p className="commercial-description">{collection.description}</p>
+            <div className="collection-hero-actions">
               <button
                 className="hero-cta-btn"
-                data-cursor="magnetic"
                 onClick={() => {
                   const gallery = document.getElementById('curated-pieces');
                   if (gallery) gallery.scrollIntoView({ behavior: 'smooth' });
@@ -229,27 +187,22 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
                 <div className="product-media-wrapper" data-cursor="view">
                   <img
                     src={product.imageSrc}
-                    alt={`${product.name} — ${product.type}`}
+                    alt={`${product.name} — ${product.subtitle}`}
                     className="product-image"
                     loading="lazy"
                   />
                 </div>
                 <div className="product-meta">
                   <h3 className="product-name">{product.name}</h3>
-                  <p className="product-type">{product.type}</p>
-                  <p className="product-material-line">{product.material}</p>
-                  <div className="product-price-row">
-                    <span className="price-label">FROM </span>
-                    <span className="product-price-amount">{product.price.replace(/^From\s*/i, '')}</span>
-                    <span className="product-indicative-tag">Indicative pricing</span>
-                  </div>
+                  <span className="product-type-badge">{product.type}</span>
+                  <div className="product-price">{product.price}</div>
+                  <div className="product-material">{product.material}</div>
                   <p className="product-story">{product.story}</p>
                   <button
                     className="product-consultation-btn"
-                    data-cursor="magnetic"
-                    onClick={() => openConsultationModal(`${collection.name} — ${product.name} (${product.type})`)}
+                    onClick={() => openConsultationModal(`${collection.name} — ${product.name}`)}
                   >
-                    [ REQUEST A PRIVATE CONSULTATION ]
+                    REQUEST A PRIVATE CONSULTATION
                   </button>
                 </div>
               </div>
@@ -257,134 +210,92 @@ export const CollectionDetail: React.FC<CollectionDetailProps> = ({
           </div>
         </section>
 
-        {/* 5. COLLECTION CLOSING EXPERIENCE */}
-        <section className="collection-closing-section">
-          <div className="closing-container">
-            <span className="closing-kicker">{collection.name}</span>
-            <p className="closing-statement">{collection.closingStatement}</p>
-            <div className="closing-action-group">
-              <button
-                className="hero-cta-btn"
-                data-cursor="magnetic"
-                onClick={() => openConsultationModal(`AURELLE ${collection.name} Collection Inquiry`)}
-              >
-                [ REQUEST A PRIVATE CONSULTATION ]
-              </button>
-              <button
-                className="explore-next-btn"
-                onClick={() => onNavigateCollection(collection.nextCollectionId)}
-              >
-                [ EXPLORE {collection.nextCollectionName} ]
-              </button>
-            </div>
+        {/* 5. NEXT COLLECTION TEASER */}
+        <section className="next-collection-section">
+          <div className="next-collection-container">
+            <span className="next-kicker">CONTINUE EXPLORING</span>
+            <h2 className="next-title">NEXT: {collection.nextCollectionName}</h2>
+            <button
+              className="hero-cta-btn"
+              onClick={() => onNavigateCollection(collection.nextCollectionId)}
+            >
+              [ DISCOVER {collection.nextCollectionName} ]
+            </button>
           </div>
         </section>
       </main>
 
-      {/* 6. REFINED PRIVATE CONSULTATION MODAL PANEL */}
+      {/* Luxury Footer */}
+      <footer className="aurelle-footer">
+        <div>&copy; {new Date().getFullYear()} AURELLE FINE JEWELRY. ALL RIGHTS RESERVED.</div>
+        <div style={{ display: 'flex', gap: '24px' }}>
+          <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onNavigateBack(); }}>COLLECTIONS</a>
+          <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onNavigateBack(); }}>MANIFESTO</a>
+          <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); openConsultationModal(`${collection.name} Concierge`); }}>CONCIERGE</a>
+        </div>
+      </footer>
+
+      {/* PRIVATE CONSULTATION MODAL */}
       {isModalOpen && (
-        <div className="consultation-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-          <div className="consultation-modal-content">
-            <button
-              className="consultation-modal-close"
-              aria-label="Close Consultation Dialog"
-              onClick={() => setIsModalOpen(false)}
-            >
-              &times;
-            </button>
-            <div className="consultation-modal-header">
-              <span className="modal-kicker">AURELLE CONCIERGE</span>
-              <h2 id="modal-title" className="modal-title">PRIVATE CONSULTATION</h2>
-              <p className="modal-subject-label">{modalSubject}</p>
-            </div>
+        <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)}>✕</button>
+            <span className="intro-kicker">PRIVATE CONSULTATION</span>
+            <h3 className="modal-title">INQUIRE ABOUT {modalSubject.toUpperCase()}</h3>
 
             {isSubmitted ? (
-              <div className="consultation-confirmation">
-                <p className="confirmation-statement">
-                  Thank you, <strong style={{ color: '#F5F3EE' }}>{formState.name || 'Valued Guest'}</strong>.
-                </p>
-                <p className="confirmation-body">
-                  Your private concierge inquiry for <em>{modalSubject}</em> has been registered. An Aurelle high-jewelry specialist will contact you shortly.
-                </p>
-                <button
-                  className="hero-cta-btn"
-                  style={{ marginTop: '20px' }}
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  [ RETURN TO COLLECTION ]
-                </button>
+              <div className="modal-success-message">
+                <p>Thank you for your interest in AURELLE.</p>
+                <p>A Senior Client Advisor will contact you within 24 hours to arrange your private consultation.</p>
               </div>
             ) : (
-              <form className="consultation-form" onSubmit={handleFormSubmit}>
+              <form className="modal-form" onSubmit={handleFormSubmit}>
                 <div className="form-group">
-                  <label htmlFor="concierge-name" className="form-label">FULL NAME *</label>
+                  <label htmlFor="name">FULL NAME</label>
                   <input
-                    id="concierge-name"
                     type="text"
+                    id="name"
                     required
-                    placeholder="e.g. Eleanor Vance"
-                    className="form-input"
                     value={formState.name}
                     onChange={(e) => setFormState({ ...formState, name: e.target.value })}
                   />
                 </div>
-
                 <div className="form-group">
-                  <label htmlFor="concierge-email" className="form-label">EMAIL ADDRESS *</label>
+                  <label htmlFor="email">EMAIL ADDRESS</label>
                   <input
-                    id="concierge-email"
                     type="email"
+                    id="email"
                     required
-                    placeholder="eleanor@maison.com"
-                    className="form-input"
                     value={formState.email}
                     onChange={(e) => setFormState({ ...formState, email: e.target.value })}
                   />
                 </div>
-
                 <div className="form-group">
-                  <label htmlFor="concierge-phone" className="form-label">PHONE NUMBER (OPTIONAL)</label>
+                  <label htmlFor="phone">TELEPHONE</label>
                   <input
-                    id="concierge-phone"
                     type="tel"
-                    placeholder="+91 98765 43210"
-                    className="form-input"
+                    id="phone"
                     value={formState.phone}
                     onChange={(e) => setFormState({ ...formState, phone: e.target.value })}
                   />
                 </div>
-
                 <div className="form-group">
-                  <label htmlFor="concierge-message" className="form-label">SPECIAL REQUEST OR INQUIRY</label>
+                  <label htmlFor="message">SPECIAL REQUESTS / PREFERRED TIME</label>
                   <textarea
-                    id="concierge-message"
+                    id="message"
                     rows={3}
-                    placeholder="Share any preferred timeline, sizing, or stone criteria..."
-                    className="form-textarea"
                     value={formState.message}
                     onChange={(e) => setFormState({ ...formState, message: e.target.value })}
                   />
                 </div>
-
-                <button type="submit" className="hero-cta-btn modal-submit-btn">
-                  [ SUBMIT PRIVATE INQUIRY ]
+                <button type="submit" className="hero-cta-btn" style={{ width: '100%', marginTop: '16px' }}>
+                  SUBMIT REQUEST
                 </button>
               </form>
             )}
           </div>
         </div>
       )}
-
-      {/* Luxury Footer */}
-      <footer className="aurelle-footer">
-        <div>&copy; {new Date().getFullYear()} AURELLE FINE JEWELRY. ALL RIGHTS RESERVED.</div>
-        <div style={{ display: 'flex', gap: '24px' }}>
-          <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onNavigateBack(); }}>OVERVIEW</a>
-          <a href="#" className="nav-link">PRIVACY</a>
-          <a href="#" className="nav-link">TERMS</a>
-          <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); openConsultationModal('AURELLE General Inquiry'); }}>CONCIERGE</a>
-        </div>
-      </footer>
     </div>
   );
 };
